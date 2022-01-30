@@ -1,0 +1,58 @@
+---
+title: "Tom_filter"
+author: "B.H."
+date: "1/8/2022"
+output: html_document
+---
+
+```{r filter_sidechain}
+library(readxl)
+library(tidyverse)
+
+file.list <- list.files(pattern='*.xlsx')
+df.list <- lapply(file.list, read_excel, sheet = 2)
+
+for (i in 2:2) # change "2" to N
+{
+  funa <- function(x) gsub("[^a-zA-Z]", "", x)
+  df0 = df.list[[i]]
+  df0.1 <- data.frame(df.list[[i]]) %>% mutate(peptide = funa(.[[3]]))
+  reverse <- grep(">Reverse >", df0.1[,19], fixed = TRUE)
+  df <- df0.1[-c(reverse),]
+  
+  df_156 <- grep("[+156]", df[,5], fixed = TRUE)
+  df_156raw <- df[c(df_156),]
+  df_10in156 <- grep("[+10][+156]",df_156raw[,5], fixed = TRUE)
+  df_156final <- df_156raw[-c(df_10in156),]
+  
+  df_156_10 <- grep("[+10][+156]",df[,5], fixed = TRUE)
+  df_156_10final <- df[c(df_156_10),]
+  overlap <- inner_join(df_156final, df_156_10final, by="peptide")
+  scan_time <- grep("Scan.Time", colnames(overlap))
+  overlap$diff <- abs(overlap[,c(scan_time[1])] - overlap[,c(scan_time[2])])
+  overlap <- overlap %>% filter(diff <= 2)
+  
+  overlap1 <- overlap[1:23]
+  colnames(overlap1)<- c("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","i","s","t","u","v","w")
+  overlap2 <- overlap[25:47]
+  colnames(overlap2)<- c("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","i","s","t","u","v","w")
+  
+  results <- rbind(overlap1, overlap2)
+  write.csv(results, paste0(i, ".csv"), row.names = FALSE)
+
+}
+```
+
+```{r rsu}
+files <- list.files(pattern = "*.csv")
+df_list <- lapply(files, function(x) {
+    if (!file.size(x) == 0) {
+        read.csv(x)
+    }
+})
+dfs <- do.call("rbind", df_list)
+dfx <- df.list[[1]]
+colnames(dfs) <- colnames(dfx)
+library(openxlsx)
+write.xlsx(dfs,"results_all.xlsx")
+```
