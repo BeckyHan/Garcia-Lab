@@ -3,13 +3,12 @@ import copy
 
 
 if __name__ == '__main__':
-    input_fn = "./dataset/uniprot-id_25/uniprot-id_25.fasta"
+    # input_fn = "./dataset/uniprot-id_25/uniprot-id_25.fasta"
+    input_fn = "./dataset/uniprot-human_proteome-reviewed/uniprot-human_proteome-reviewed.fasta"
     
     # out_path = "./result"
     # out_fn = "uniprot-id_25_output.fasta"
-
-    # input_fn_idx = "./dataset/uniprot-human_proteome-reviewed/uniprot-human_proteome-reviewed.idx"
-    # input_fn = "./dataset/uniprot-human_proteome-reviewed/uniprot-human_proteome-reviewed.fasta"
+    
     # out_path = "./result"
     # out_fn = "uniprot-human_proteome-reviewed_output.fasta"
 
@@ -34,11 +33,32 @@ if __name__ == '__main__':
     
     input_dict = SeqIO.index_db(input_fn_idx, input_fn, "fasta")
 
+    # calculate for subseq starting from D and end at K or R
     rec_output_all = []
     for key in input_dict.keys():
-        rec_output_lst = fasta_proc_1(None, input_dict[key])
+        rec_output_lst = fasta_proc_1(None, input_dict[key], start_elems = ["D"], end_elems = ["K", "R"])
         rec_output_all += rec_output_lst
     
     mkdirs(output_path)
-    SeqIO.write(rec_output_all, output_path + "/" + file_name + "_D_output.fasta", "fasta")
+    SeqIO.write(rec_output_all, output_path + "/" + file_name + "_output_D_KR.fasta", "fasta")
+
+    # calculate for subseq starting from E and end at K or R
+    rec_output_all = []
+    for key in input_dict.keys():
+        rec_output_lst = fasta_proc_1(None, input_dict[key], start_elems = ["E"], end_elems = ["K", "R"])
+        rec_output_all += rec_output_lst
+    
+    mkdirs(output_path)
+    SeqIO.write(rec_output_all, output_path + "/" + file_name + "_output_E_KR.fasta", "fasta")
+
+    # calculate for subseq starting from C and end at K or R
+    rec_output_all = []
+    for key in input_dict.keys():
+        rec_output_lst = fasta_proc_1(None, input_dict[key], start_elems = ["C"], end_elems = ["K", "R"])
+        rec_output_all += rec_output_lst
+    
+    mkdirs(output_path)
+    SeqIO.write(rec_output_all, output_path + "/" + file_name + "_output_C_KR.fasta", "fasta")
+
+
 

@@ -2,8 +2,10 @@ from Bio import SeqIO
 from util import *
 from Bio.SeqRecord import SeqRecord
 
-def fasta_proc_1(opts, record):
+def fasta_proc_1(opts, record, start_elems = ["D"], end_elems = ["K", "R"]):
     """extract a subsequence from the sequence of seq_record based on the rule and save them in files.
+    
+    Starts from start_elems and end at end_elems. By default, start_elems = ["D"] and end_elems = ["K", "R"]. Here we use this default case as an example
 
     1. Subseq starts from D and ends at K or R.
     2. Insert R in front of the beginnning D
@@ -18,7 +20,15 @@ def fasta_proc_1(opts, record):
         input options class
     record : Bio.SeqRecord.SeqRecord
         a Biopy SeqRecord to be processed
+    start_elems : list
+        list of start elements in the subsequence. "D" by default
+    end_elems : list
+        list of end elements in the subsequence. "K" or "R" by default
     """
+    # genrate a part of subseq ID
+    start_elem_name = "".join(start_elems)
+    end_elem_name = "".join(end_elems)
+
     # generate the new description for the newly generated subsequence
     new_description_temp = record.description.split(" ")
     new_description_temp.pop(0)
@@ -30,9 +40,9 @@ def fasta_proc_1(opts, record):
     KR_idx_lst = []
 
     for elem_idx, elem in enumerate(seq):
-        if elem == "D":
+        if elem in start_elems:
             D_idx_lst.append(elem_idx)
-        elif elem in ["K", "R"]:
+        elif elem in end_elems:
             KR_idx_lst.append(elem_idx)
     
     subseq_idx = 0 # used to generate the subseq file name
@@ -52,13 +62,13 @@ def fasta_proc_1(opts, record):
                 # check and generate subseq alone with seq[KR_idx_temp], seq[KR_idx_temp + 1], ..., seq[len(seq) - 1]
                 # process the case in which K/R is all together (e.g., XXXKRK)
                 for i in range(KR_idx_temp, len(seq)):
-                    if seq[i] in ["K", "R"]:
+                    if seq[i] in end_elems:
                         subseq = seq[D_idx : i] + seq[i]
                         # Add R in the front of subseq
                         subseq = "R" + subseq
 
                         # generate the file_name for the subseq
-                        subseq_name = "subseq%d" % subseq_idx
+                        subseq_name = "subseq%d" % subseq_idx + "_" + start_elem_name + "_" + end_elem_name
                         if D_idx != 0 and seq[D_idx - 1] == "R":
                             subseq_name = subseq_name + "_R"
                         subseq_idx += 1
@@ -78,14 +88,31 @@ if __name__ == '__main__':
     input_dict = SeqIO.index_db("./dataset/uniprot-id_25/uniprot-id_25.idx", "./dataset/uniprot-id_25/uniprot-id_25.fasta", "fasta")
 
     record = input_dict["sp|O75452|RDH16_HUMAN"]
-    print("record.seq", record.seq)
+    print("record.seq:")
+    print(record.seq)
     print("record.id", record.id)
     print("record.description", record.description)
-    rec_output_lst = fasta_proc_1(None, record)
+
+    # calculate for subseq starting from D and end at K or R
+    rec_output_lst = fasta_proc_1(None, record, start_elems = ["D"], end_elems = ["K", "R"])
     print(len(rec_output_lst))
 
     mkdirs("./test")
-    SeqIO.write(rec_output_lst,"./test/uniprot-id_25_output.fasta", "fasta")
+    SeqIO.write(rec_output_lst,"./test/uniprot-id_25_output_D_KR.fasta", "fasta")
+
+    # calculate for subseq starting from E and end at K or R
+    rec_output_lst = fasta_proc_1(None, record, start_elems = ["E"], end_elems = ["K", "R"])
+    print(len(rec_output_lst))
+
+    mkdirs("./test")
+    SeqIO.write(rec_output_lst,"./test/uniprot-id_25_output_E_KR.fasta", "fasta")
+
+    # calculate for subseq starting from C and end at K or R
+    rec_output_lst = fasta_proc_1(None, record, start_elems = ["C"], end_elems = ["K", "R"])
+    print(len(rec_output_lst))
+
+    mkdirs("./test")
+    SeqIO.write(rec_output_lst,"./test/uniprot-id_25_output_C_KR.fasta", "fasta")
 
     new_description_temp = record.description.split(" ")
     new_description_temp.pop(0)
