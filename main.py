@@ -92,7 +92,7 @@ if __name__ == '__main__':
     
     mkdirs(output_path)
     SeqIO.write(rec_output_all, output_path + "/" + file_name + "_output_C_KR.fasta", "fasta")
-
+    """
     # convert first C to B in XXX_output_C_KR.fasta
     input_dict_c2b = SeqIO.index_db(output_path + "/" + file_name + "_output_C_KR.idx", output_path + "/" + file_name + "_output_C_KR.fasta", "fasta")
 
@@ -103,15 +103,15 @@ if __name__ == '__main__':
     
     SeqIO.write(rec_convert_lst, output_path + "/" + file_name + "_output_C2B_KR.fasta", "fasta")
 
-    """
-    # calculate for subseq starting from K or R and end at K or R
-    rec_output_all = []
-    for key in input_dict.keys():
-        rec_output_lst = fasta_proc_3(None, input_dict[key], start_elems = ["K", "R"], end_elems = ["K", "R"])
-        rec_output_all += rec_output_lst
+
+    # # calculate for subseq starting from K or R and end at K or R
+    # rec_output_all = []
+    # for key in input_dict.keys():
+    #     rec_output_lst = fasta_proc_3(None, input_dict[key], start_elems = ["K", "R"], end_elems = ["K", "R"])
+    #     rec_output_all += rec_output_lst
     
-    mkdirs(output_path)
-    SeqIO.write(rec_output_all, output_path + "/" + file_name + "_output_KR_KR.fasta", "fasta")
+    # mkdirs(output_path)
+    # SeqIO.write(rec_output_all, output_path + "/" + file_name + "_output_KR_KR.fasta", "fasta")
 
     # translate target elements in XXX_output_KR_KR.fasta
     # One record for each translation
@@ -151,12 +151,12 @@ if __name__ == '__main__':
     SeqIO.write(rec_output_all_trans, output_path + "/" + file_name + "_output_KR_KR_E2O.fasta", "fasta")
 
 
-    # calculate for subseq starting from all elements except for C and end at K or R
-    start_elem_list = ["A", "R", "N", "D", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
-    rec_output_all = []
-    for key in input_dict.keys():
-        rec_output_lst = fasta_proc_2(None, input_dict[key], start_elems = start_elem_list, end_elems = ["K", "R"])
-        rec_output_all += rec_output_lst
+    # # calculate for subseq starting from all elements except for C and end at K or R
+    # start_elem_list = ["A", "R", "N", "D", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
+    # rec_output_all = []
+    # for key in input_dict.keys():
+    #     rec_output_lst = fasta_proc_2(None, input_dict[key], start_elems = start_elem_list, end_elems = ["K", "R"])
+    #     rec_output_all += rec_output_lst
     
-    mkdirs(output_path)
-    SeqIO.write(rec_output_all, output_path + "/" + file_name + "_output_AllExceptC_KR.fasta", "fasta")
+    # mkdirs(output_path)
+    # SeqIO.write(rec_output_all, output_path + "/" + file_name + "_output_AllExceptC_KR.fasta", "fasta")

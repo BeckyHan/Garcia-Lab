@@ -30,7 +30,16 @@ def merge_file(input_fn_list, output_fn):
     os.system("cat " + file_list_temp + " > " + output_fn)
 
 if __name__ == '__main__':
-    path = "./result/uniprot-id_25/policy2/"
-    file_list = [path + "uniprot-id_25_output_C_KR.fasta", path + "uniprot-id_25_output_E_KR.fasta"]
+    # path = "./result/uniprot-id_25/policy2/"
+    # dataset = "uniprot-id_25"
 
-    merge_file(file_list, path + "uniprot-id_25_output_C+E_KR.fasta")
+    path = "./result/uniprot-human_proteome-reviewed/policy2/"
+    dataset = "uniprot-human_proteome-reviewed"
+
+    # file_list = [path + "uniprot-id_25_output_C_KR.fasta", path + "uniprot-id_25_output_E_KR.fasta"]
+
+    # merge_file(file_list, path + "uniprot-id_25_output_C+E_KR.fasta")
+
+    file_list = [path + dataset +"_output_AllExceptC_KR.fasta", path + dataset + "_output_C2B_KR.fasta", path + dataset + "_output_KR_KR_C2Z.fasta", path + dataset + "_output_KR_KR_D2U.fasta", path + dataset + "_output_KR_KR_E2O.fasta"]
+
+    merge_file(file_list, path + dataset + "_output_AllExceptC+C2B_trans_KR.fasta")

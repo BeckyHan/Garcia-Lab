@@ -424,6 +424,18 @@ def fasta_trans_first_elem(opts, record, start_elems = ["C"], replace_elem = "B"
     new_description_temp.pop(0)
     new_description = " ".join(new_description_temp)
 
+    # generate new id for each seq
+    # replace the starting element to replace policy
+    # e.g. replace "XXX_C_XXX" to "XXX_C2B_XXX"
+    new_id_elem = "".join(start_elems) + "2" + replace_elem
+    id_list_temp = record.id.split("_")
+    id_list_temp2 = []
+    for id_elem in id_list_temp:
+        if id_elem in start_elems:
+            id_elem = new_id_elem
+        id_list_temp2.append(id_elem)
+    new_id = "_".join(id_list_temp2)
+
     seq = record.seq
 
     target_elem = seq[1]
@@ -433,7 +445,7 @@ def fasta_trans_first_elem(opts, record, start_elems = ["C"], replace_elem = "B"
     seq_new_lst = list(seq)
     seq_new_lst[1] = replace_elem
     seq_new = "".join(seq_new_lst)
-    record_new = SeqRecord(Seq(seq_new), id=record.id, description=new_description)
+    record_new = SeqRecord(Seq(seq_new), id=new_id, description=new_description)
 
     return record_new
 
@@ -459,6 +471,11 @@ def fasta_trans_elem_once(opts, record, trans_dict):
     new_description_temp.pop(0)
     new_description = " ".join(new_description_temp)
 
+    # generate new id segment for each seq
+    id_seg_list_temp = [key + "2" + trans_dict[key] for key in trans_dict.keys()]
+    new_id_seg = "_".join(id_seg_list_temp)
+
+
     seq = record.seq
 
     subseq_idx = 0 # used to generate the subseq file name
@@ -470,7 +487,7 @@ def fasta_trans_elem_once(opts, record, trans_dict):
             seq_new_lst = list(seq)
             seq_new_lst[i] = replace_elem
             seq_new = "".join(seq_new_lst)
-            record_new = SeqRecord(Seq(seq_new), id=record.id+"_"+str(subseq_idx), description=new_description)
+            record_new = SeqRecord(Seq(seq_new), id=record.id+"_"+new_id_seg+"_"+str(subseq_idx), description=new_description)
             rec_output_lst.append(record_new)
             subseq_idx += 1
 
