@@ -1,0 +1,103 @@
+---
+title: "FlasePositive"
+author: "B.H."
+date: "3/21/2022"
+output: html_document
+---
+```{r 1merge}
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+# Find all .csv files
+files <- dir("D:/Tom/lin_1_9_10/whole", recursive=TRUE, full.names=TRUE, pattern="\\.xlsx$")
+
+# Apply the function to all files.
+result <- files %>% lapply(read_excel, sheet = 2, col_types = "text") %>% bind_rows %>% rename(Peptide = `Peptide\n< ProteinMetrics Confidential >`)
+write.xlsx(result, "1combine.xlsx")
+```
+
+
+```{r 2light_extract}
+light_list = list.files(pattern = "1combine.xlsx", full.names = TRUE)  
+data_light = light_list %>% lapply(read_excel, col_names = FALSE, skip = 1, sheet = 1, col_types = "text") %>% bind_rows
+funb <- function(x) gsub("[^0-9A-Za-z///']", "", x)
+data_mutate = data_light %>% mutate(modi = funb(.[[5]])) 
+toMatch <- c('156','188','204')
+match <- data_mutate %>% filter(., grepl(paste(toMatch, collapse="|"), modi)) %>% select(-modi)
+light1 <- read_excel(light_list[1], sheet = 1, col_types = "text")
+colnames(match) <- colnames(light1)
+write.xlsx(match, "2light_match.xlsx")
+
+```
+
+```{r 3filter}
+df <- read_excel("2light_match.xlsx") %>% mutate(across(c(14,16,17),as.numeric)) %>% rename(Deltamod = `Delta\r\r\nMod`) %>% filter(Score >= 300 & Deltamod >= 10 & `|Log Prob|` >= 2)
+df1 = df
+fun = function(x) substring(x, 1, 8)
+funa = function(x) substring(x, 1, 2)
+funb = function(x) substring(x, nchar(x)-1)
+df1$reverse <- apply(df1[,19], 1, fun)
+df1$begin = apply(df1[,3], 1, funa)
+df1$end = apply(df1[,3], 1, funb)
+# note: if you want to remove R from right side of the peptides, remove # in the next line. 
+df2 = df1 %>% filter(reverse != '>Reverse') #%>% filter(begin != 'R.') #%>% filter(end != ".R")
+write.xlsx(df2, "3codeFilter.xlsx", keepNA = TRUE)
+```
+
+```{r 2.1merge_unmod}
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+# Find all .csv files
+files <- dir("D:/Tom/lin_1_9_10/unmod", recursive=TRUE, full.names=TRUE, pattern="\\.xlsx$")
+
+# Apply the function to all files.
+result <- files %>% lapply(read_excel, sheet = 2, col_types = "text") %>% bind_rows %>% rename(Peptide = `Peptide\n< ProteinMetrics Confidential >`)
+colnames(result[,3]) = "Peptide"
+write.xlsx(result, "2.1unmod.xlsx")
+```
+
+```{r 4rt_match}
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+
+df1 = read_excel("2.1unmod.xlsx", col_types = "text") %>% mutate(`Scan Time` = as.numeric(`Scan Time`)) %>% separate(Comment, into=c("raw","other"), sep = "[.]", remove = FALSE, extra = "drop")
+
+df2 = read_excel("2light_match.xlsx") %>% mutate(`Scan Time` = as.numeric(`Scan Time`)) %>% separate(Comment, into=c("raw","other"), sep = "[.]", remove = FALSE, extra = "drop")
+
+
+merge = inner_join(df1, df2, by = c("Scan Time")) %>% filter(raw.x == raw.y) %>% unique(.) 
+
+write.xlsx(merge, "4rt_match.xlsx", keepNA = TRUE)
+```
+
+```{r 5false_positive}
+df = read_excel("4rt_match.xlsx") %>% mutate(`|Log Prob|.x` = as.numeric(`|Log Prob|.x`), `|Log Prob|.y` = as.numeric(`|Log Prob|.y`)) %>% filter(`|Log Prob|.x` > `|Log Prob|.y`)
+
+write.xlsx(df, "5rt_filter.xlsx")
+```
+
+
+```{r 6no_falsepositive}
+df5 = read_excel("5rt_filter.xlsx") %>% select(.,28) %>% unique(.)
+df_reference = read_excel("D:/Tom/lin_1_9_10/whole/3codeFilter.xlsx") 
+df_left = df_reference[!(df_reference$Peptide %in% df5$Peptide.y),]
+#overlap = inner_join(df_reference, df5, by = c('peptide'))
+
+write.xlsx(df_left, "6nofalsepositive.xlsx")
+```
+
+```{r 7removeleftR}
+df6 = read_excel("6nofalsepositive.xlsx") %>% filter(str_detect(Peptide, fixed("R.[+156.101]"), negate = TRUE)) %>% filter(str_detect(Peptide, fixed("R.[+188.091]"), negate = TRUE)) %>% filter(str_detect(Peptide, fixed("R.[+204.086]"), negate = TRUE))
+write.xlsx(df6, "7removeleftR.xlsx")
+```
+
+```{r 8remove6AA}
+df7 = read_excel("7removeleftR.xlsx")
+funb <- function(x) gsub("[^a-zA-Z]", "", x)
+data_enddash = df7 %>% filter(str_detect(Peptide, ".-$")) %>% mutate(pep = funb(.[[3]])) %>% mutate(sub_pep = str_sub(pep, 2, -1)) %>% mutate(sub_pep_len = nchar(sub_pep)) %>% filter(sub_pep_len >= 6)
+data_other = df7 %>% filter(!(str_detect(Peptide, ".-$"))) %>% mutate(pep = funb(.[[3]])) %>% mutate(sub_pep = str_sub(pep, 2, -2)) %>% mutate(sub_pep_len = nchar(sub_pep)) %>% filter(sub_pep_len >= 6)
+data_com = rbind(data_enddash, data_other)
+write.xlsx(data_com, "8remove6AA.xlsx")
+```
